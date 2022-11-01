@@ -1,0 +1,12 @@
+{
+  "name": "client-file-uploader-monorepo",
+  "version": "0.1.0",
+  "description": "Example CDK project of clients uploading files",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build"
+  },
+  "devDependencies": {
+    "turbo": "^1.6.3"
+  }
+}

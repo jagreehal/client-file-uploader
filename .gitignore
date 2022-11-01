@@ -13,3 +13,6 @@ cdk.out
 __*
 **/.env
 cdk-exports.json
+
+.turbo
+dist
