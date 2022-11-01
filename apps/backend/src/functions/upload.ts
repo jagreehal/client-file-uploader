@@ -12,30 +12,16 @@ import { createJsonResponse } from '@/utils/create-json-response';
 import { Upload } from '@/models';
 import createError from 'http-errors';
 import { createUpload } from '@/db';
-import { UploadTypeEnum } from '@/models';
 import { getEnv } from '@/utils/get-env';
+import { UploadRequest, UploadResponse } from 'schemas';
 
 const schema = z.object({
-  body: z.object({
-    type: UploadTypeEnum,
-    file: z.object({
-      contentType: z.string(),
-      filename: z.string(),
-    }),
-  }),
+  body: UploadRequest,
 });
-
-type CreateUploadResponse = {
-  contentType: string;
-  id: string;
-  url: string;
-};
-
-type Response = APIGatewayProxyResultV2<CreateUploadResponse>;
 
 const s3 = new S3Client({});
 
-const uploadFn = async (event: APIGatewayEvent): Promise<Response> => {
+const uploadFn = async (event: APIGatewayEvent) => {
   const input = schema.parse(event);
   const { body } = input;
   const id = uuid();
@@ -51,7 +37,7 @@ const uploadFn = async (event: APIGatewayEvent): Promise<Response> => {
   try {
     const command = new PutObjectCommand({
       Bucket: getEnv('BUCKET_NAME'),
-      Key: `${S3_UPLOAD_KEY_PREFIX}/${clientId}/${id}`,
+      Key: `${S3_UPLOAD_KEY_PREFIX}/${body.type}/${clientId}/${id}`,
       ContentType: body.file.contentType,
     });
 
@@ -61,7 +47,7 @@ const uploadFn = async (event: APIGatewayEvent): Promise<Response> => {
 
     await createUpload(upload);
 
-    return createJsonResponse<CreateUploadResponse>({
+    return createJsonResponse<UploadResponse>({
       id,
       contentType: body.file.contentType,
       url,

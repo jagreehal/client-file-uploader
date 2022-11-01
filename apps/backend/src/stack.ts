@@ -6,6 +6,7 @@ import { Cors, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
 
 import {
   BUCKET_NAME,
+  EVENT_BUS_NAME,
   EVENT_S3_OBJECT_CREATED_RULE,
   REST_API,
   S3_UPLOAD_KEY_PREFIX,
@@ -14,6 +15,7 @@ import {
 import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { Rule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
+import { UploadTypes } from 'schemas';
 
 interface ClientUploaderProps extends cdk.StackProps {}
 
@@ -112,6 +114,35 @@ export class ClientFileUploader extends cdk.Stack {
         resources: [s3Bucket.bucketArn],
       },
       targets: [new LambdaFunction(s3ObjectCreatedEventHandlerFn)],
+    });
+
+    const eventAttendeesUploadProcessorFn = createLambdaFunction({
+      scope: this,
+      id: 'event-attendees-upload-processor',
+      props: {
+        environment: {
+          BUCKET_NAME: s3Bucket.bucketName,
+        },
+      },
+    });
+    s3Bucket.grantRead(eventAttendeesUploadProcessorFn);
+
+    new Rule(this, `${UploadTypes['event-attendees']}-rule`, {
+      eventPattern: {
+        source: ['aws.s3'],
+        detailType: ['Object Created'],
+        resources: [s3Bucket.bucketArn],
+        detail: {
+          object: {
+            key: [
+              {
+                prefix: `${S3_UPLOAD_KEY_PREFIX}/${UploadTypes['event-attendees']}`,
+              },
+            ],
+          },
+        },
+      },
+      targets: [new LambdaFunction(eventAttendeesUploadProcessorFn)],
     });
 
     new cdk.CfnOutput(this, 'API_URL', {
