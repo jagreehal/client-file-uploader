@@ -1,0 +1,12 @@
+import config from '../package.json';
+export const PREFIX = `${process.env.STAGE || 'dev'}-${config.name}`;
+export const TABLE_NAME = `${PREFIX}-table`;
+export const AWS_REGION = process.env.AWS_REGION;
+export const BUCKET_NAME = `${PREFIX}-s3-bucket`;
+export const REST_API = `${PREFIX}-api`;
+export const S3_UPLOAD_KEY_PREFIX = `uploads`;
+export const EVENT_S3_OBJECT_CREATED_RULE = `${PREFIX}-s3-object-created-rule`;
+export const BUCKET_NAME_CREATED_EVENT_BRIDGE_RULE = `${PREFIX}-${BUCKET_NAME}-created-rule`;
+export const TABLE_NAME_CREATED_EVENT_BRIDGE_RULE = `${PREFIX}-${TABLE_NAME}-insert-rule`;
+export const PRE_SIGNED_URL_EXPIRATION_SECONDS = 300;
+export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS;
