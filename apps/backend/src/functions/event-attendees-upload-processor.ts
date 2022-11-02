@@ -38,7 +38,7 @@ export const handler: EventBridgeHandler<
     Time: new Date(),
     Source: 'event-attendees-upload-processor',
     Detail: JSON.stringify(attendees),
-    DetailType: 'attendees',
+    DetailType: 'AttendeesValidated',
   };
 
   const response = await eventBridgeClient
