@@ -41,11 +41,11 @@ export const handler: EventBridgeHandler<
     DetailType: 'attendees',
   };
 
-  // const response = await eventBridgeClient
-  //   .putEvents({
-  //     Entries: [eventBridgeEvent],
-  //   })
-  //   .promise();
+  const response = await eventBridgeClient
+    .putEvents({
+      Entries: [eventBridgeEvent],
+    })
+    .promise();
 
-  // console.log(`EventBridge response: ${response}`);
+  console.log(`EventBridge response: ${JSON.stringify(response)}`);
 };

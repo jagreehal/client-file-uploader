@@ -13,7 +13,7 @@ import {
   TABLE_NAME,
 } from './config';
 import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
-import { Rule } from 'aws-cdk-lib/aws-events';
+import { EventBus, Rule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
 import { UploadTypes } from 'schemas';
 
@@ -22,6 +22,8 @@ interface ClientUploaderProps extends cdk.StackProps {}
 export class ClientFileUploader extends cdk.Stack {
   constructor(app: cdk.App, id: string, props?: ClientUploaderProps) {
     super(app, id, props);
+
+    const bus = EventBus.fromEventBusName(this, `bus`, 'default');
 
     const uploadsTable = new dynamodb.Table(this, TABLE_NAME, {
       partitionKey: {
@@ -126,6 +128,7 @@ export class ClientFileUploader extends cdk.Stack {
       },
     });
     s3Bucket.grantRead(eventAttendeesUploadProcessorFn);
+    bus.grantPutEventsTo(eventAttendeesUploadProcessorFn);
 
     new Rule(this, `${UploadTypes['event-attendees']}-rule`, {
       eventPattern: {
