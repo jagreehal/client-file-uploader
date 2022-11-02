@@ -11,3 +11,6 @@ export const TABLE_NAME_CREATED_EVENT_BRIDGE_RULE = `${PREFIX}-${TABLE_NAME}-ins
 export const PRE_SIGNED_URL_EXPIRATION_SECONDS = 300;
 export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS;
 export const EVENT_BUS_NAME = `${PREFIX}-event-bus`;
+export const EVENT_BRIDGE_WEB_SOCKET = `${PREFIX}-event-bridge-web-socket`;
+export const WEB_SOCKET_API = `${PREFIX}-ws-api`;
+export const WEB_SOCKET_TABLE = `${PREFIX}-ws-table`;

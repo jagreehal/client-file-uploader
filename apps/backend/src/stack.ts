@@ -6,6 +6,7 @@ import { Cors, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
 
 import {
   BUCKET_NAME,
+  EVENT_BRIDGE_WEB_SOCKET,
   EVENT_BUS_NAME,
   EVENT_S3_OBJECT_CREATED_RULE,
   REST_API,
@@ -16,6 +17,7 @@ import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { EventBus, Rule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
 import { UploadTypes } from 'schemas';
+import { EventBridgeWebSocket } from './web-socket-construct';
 
 interface ClientUploaderProps extends cdk.StackProps {}
 
@@ -24,6 +26,13 @@ export class ClientFileUploader extends cdk.Stack {
     super(app, id, props);
 
     const bus = EventBus.fromEventBusName(this, `bus`, 'default');
+
+    const ws = new EventBridgeWebSocket(this, EVENT_BRIDGE_WEB_SOCKET, {
+      bus,
+      eventPattern: {
+        detailType: ['AttendeesValidated'],
+      },
+    });
 
     const uploadsTable = new dynamodb.Table(this, TABLE_NAME, {
       partitionKey: {
@@ -150,6 +159,10 @@ export class ClientFileUploader extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'API_URL', {
       value: api.url,
+    });
+
+    new cdk.CfnOutput(this, 'WS_API_URL', {
+      value: ws.webSocketEndpoint,
     });
 
     app.synth();
