@@ -7,7 +7,7 @@ import {
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import * as path from 'path';
-import { PREFIX } from '../config';
+import { STACK_NAME } from '../config';
 
 const nodeJsFunctionProps: NodejsFunctionProps = {
   bundling: {
@@ -35,7 +35,7 @@ export function createLambdaFunction({
   file?: string;
   props: NodejsFunctionProps;
 }) {
-  const functionName = `${PREFIX}-${id}`;
+  const functionName = `${STACK_NAME}-${id}`;
   const lambdaFunction = new NodejsFunction(scope, functionName, {
     entry: path.join(__dirname, `../functions/${file || id}.ts`),
     ...nodeJsFunctionProps,

@@ -7,6 +7,7 @@ import { UploadRequest, UploadTypes } from 'schemas';
 export type uploadProps = {
   file: string;
   callbackUrl?: string;
+  token?: string;
 };
 
 export class Uploader {
@@ -29,7 +30,7 @@ export class Uploader {
       },
     };
 
-    const { data } = await axios.post(this.uploadURL, body);
+    const { data } = await axios.post(`${this.uploadURL}/uploads`, body);
 
     await axios.put(data.url, {
       body: image,
@@ -41,10 +42,16 @@ export class Uploader {
     return data.id;
   }
 
-  public async uploadEventAttendees({
-    file,
-    callbackUrl,
-  }: uploadProps): Promise<string> {
+  public async uploadEventAttendeesWithToken(
+    props: uploadProps
+  ): Promise<string> {
+    return this.uploadEventAttendees(props, 'uploads-with-token');
+  }
+
+  public async uploadEventAttendees(
+    { file, callbackUrl, token }: uploadProps,
+    route = 'uploads'
+  ): Promise<string> {
     const json = await fs.readFile(file, 'utf-8');
     const contentType = mime.lookup(file);
     if (!contentType) {
@@ -60,11 +67,12 @@ export class Uploader {
       callbackUrl,
     };
 
-    const { data } = await axios.post(this.uploadURL, body);
+    const { data } = await axios.post(`${this.uploadURL}/${route}`, body);
     await axios.put(data.url, {
       body: JSON.stringify(JSON.parse(json)),
       headers: {
         'Content-Type': contentType,
+        Authorization: token ? `Bearer ${token}` : undefined,
       },
     });
 
