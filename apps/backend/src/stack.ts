@@ -1,17 +1,25 @@
 import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { createLambdaFunction } from './utils/create-lambda-function';
-import { Cors, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
+import {
+  AuthorizationType,
+  Cors,
+  LambdaIntegration,
+  RestApi,
+  TokenAuthorizer,
+} from 'aws-cdk-lib/aws-apigateway';
 
 import {
+  AUTH0_PUBLIC_KEY,
   BUCKET_NAME,
   EVENT_BRIDGE_WEB_SOCKET,
-  EVENT_BUS_NAME,
   EVENT_S3_OBJECT_CREATED_RULE,
   REST_API,
   S3_UPLOAD_KEY_PREFIX,
   TABLE_NAME,
+  TOKEN_AUTHORIZER,
 } from './config';
 import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { EventBus, Rule } from 'aws-cdk-lib/aws-events';
@@ -25,8 +33,15 @@ export class ClientFileUploader extends cdk.Stack {
   constructor(app: cdk.App, id: string, props?: ClientUploaderProps) {
     super(app, id, props);
 
+    const auth0PublicKey = ssm.StringParameter.valueFromLookup(
+      this,
+      AUTH0_PUBLIC_KEY
+    );
+
+    // uses default event bus for now
     const bus = EventBus.fromEventBusName(this, `bus`, 'default');
 
+    // uses web socket construct
     const ws = new EventBridgeWebSocket(this, EVENT_BRIDGE_WEB_SOCKET, {
       bus,
       eventPattern: {
@@ -34,6 +49,7 @@ export class ClientFileUploader extends cdk.Stack {
       },
     });
 
+    // to store metadata for uploaded files
     const uploadsTable = new dynamodb.Table(this, TABLE_NAME, {
       partitionKey: {
         name: 'id',
@@ -44,13 +60,14 @@ export class ClientFileUploader extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
 
+    // bucket to store uploaded files
     const s3Bucket = new s3.Bucket(this, BUCKET_NAME, {
       bucketName: BUCKET_NAME,
       publicReadAccess: false,
       autoDeleteObjects: true,
       eventBridgeEnabled: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-      // transferAcceleration: true,
+      transferAcceleration: true,
       lifecycleRules: [
         {
           prefix: S3_UPLOAD_KEY_PREFIX,
@@ -69,6 +86,7 @@ export class ClientFileUploader extends cdk.Stack {
       ],
     });
 
+    // REST api to upload files
     const api = new RestApi(this, REST_API, {
       defaultCorsPreflightOptions: {
         allowHeaders: Cors.DEFAULT_HEADERS,
@@ -78,6 +96,21 @@ export class ClientFileUploader extends cdk.Stack {
       },
     });
 
+    // authorizer
+    const authorizer = new TokenAuthorizer(this, TOKEN_AUTHORIZER, {
+      handler: createLambdaFunction({
+        scope: this,
+        id: 'authorizer',
+        props: {
+          environment: {
+            AUTH0_PUBLIC_KEY: auth0PublicKey,
+          },
+        },
+      }),
+      identitySource: 'method.request.header.Authorization',
+    });
+
+    // upload function
     const uploadFn = createLambdaFunction({
       scope: this,
       id: 'upload',
@@ -90,10 +123,13 @@ export class ClientFileUploader extends cdk.Stack {
     });
     uploadsTable.grant(uploadFn, 'dynamodb:PutItem');
     s3Bucket.grantReadWrite(uploadFn);
+    const uploads = api.root.addResource('uploads');
+    uploads.addMethod('POST', new LambdaIntegration(uploadFn), {
+      authorizationType: AuthorizationType.CUSTOM,
+      authorizer,
+    });
 
-    const upload = api.root.addResource('uploads');
-    upload.addMethod('POST', new LambdaIntegration(uploadFn));
-
+    // upload function using S3 event
     const uploadProcessorFn = createLambdaFunction({
       scope: this,
       id: 'upload-processor',

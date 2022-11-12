@@ -17,16 +17,21 @@ import { UploadRequest, UploadResponse } from 'schemas';
 
 const schema = z.object({
   body: UploadRequest,
+  requestContext: z.object({
+    authorizer: z.object({
+      email: z.string(),
+    }),
+  }),
 });
 
 const s3 = new S3Client({});
 
 const uploadFn = async (event: APIGatewayEvent) => {
   const input = schema.parse(event);
-  const { body } = input;
+  const { body, requestContext } = input;
   const id = uuid();
 
-  const clientId = 'ACME_CORP'; // will come from auth token
+  const clientId = requestContext.authorizer.email;
 
   const upload: Upload = {
     id,

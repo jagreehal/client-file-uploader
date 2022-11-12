@@ -33,7 +33,17 @@ async function uploadEventAttendees() {
 
   const id = await uploader.uploadEventAttendees({
     file,
-    callbackUrl: 'https://webhook.site/6101c48f-c38e-423c-a6de-3b4eaad54620',
+  });
+
+  return id;
+}
+
+async function uploadEventAttendeesWithToken() {
+  const file = createFilePath('event-attendees.json');
+
+  const id = await uploader.uploadEventAttendeesWithToken({
+    file,
+    token: process.env.TOKEN!,
   });
 
   return id;
