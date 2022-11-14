@@ -37,3 +37,5 @@ This application allows clients to upload files via presigned urls. To do so the
 Once they have this a client can make a POST request to the `/uploads` endpoint. This endpoint will then validate the request and store information in DynamoDB and a presigned url will be returned. The client can then upload the file to the presigned url.
 
 Once the file is uploaded to S3 an event will be sent to EventBridge and to a lambda function which has an S3 bucket configured as the event source.
+
+An API Gateway websocket subscribes to an EventBridge event and will send a message to the client via the websocket.
