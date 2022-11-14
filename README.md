@@ -2,7 +2,7 @@
 
 This is an example of a solution of allowing client to upload files using AWS.
 
-## How It Works (or will work when complete 😉)
+## How It Works
 
 ```mermaid
 sequenceDiagram
@@ -13,8 +13,6 @@ sequenceDiagram
     participant S3
     participant Upload URL
     participant Lambda
-    User->>Auth Service: Token request
-    Auth Service->>User: Token
     User->>API Gateway: POST /upload
     API Gateway->>Lambda: Validate request
     Lambda->>DynamoDB: Store upload details
@@ -29,4 +27,3 @@ This application allows clients to upload files via presigned urls. To do so the
 Once they have this a client can make a POST request to the `/uploads` endpoint. This endpoint will then validate the request and store information in DynamoDB and a presigned url will be returned. The client can then upload the file to the presigned url.
 
 Once the file is uploaded to S3 an event will be sent to EventBridge and to a lambda function which has an S3 bucket configured as the event source.
-
