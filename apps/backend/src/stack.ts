@@ -97,18 +97,18 @@ export class ClientFileUploader extends cdk.Stack {
     });
 
     // authorizer
-    const authorizer = new TokenAuthorizer(this, TOKEN_AUTHORIZER, {
-      handler: createLambdaFunction({
-        scope: this,
-        id: 'authorizer',
-        props: {
-          environment: {
-            AUTH0_PUBLIC_KEY: auth0PublicKey,
-          },
-        },
-      }),
-      identitySource: 'method.request.header.Authorization',
-    });
+    // const authorizer = new TokenAuthorizer(this, TOKEN_AUTHORIZER, {
+    //   handler: createLambdaFunction({
+    //     scope: this,
+    //     id: 'authorizer',
+    //     props: {
+    //       environment: {
+    //         AUTH0_PUBLIC_KEY: auth0PublicKey,
+    //       },
+    //     },
+    //   }),
+    //   identitySource: 'method.request.header.Authorization',
+    // });
 
     // upload function
     const uploadFn = createLambdaFunction({
@@ -125,8 +125,8 @@ export class ClientFileUploader extends cdk.Stack {
     s3Bucket.grantReadWrite(uploadFn);
     const uploads = api.root.addResource('uploads');
     uploads.addMethod('POST', new LambdaIntegration(uploadFn), {
-      authorizationType: AuthorizationType.CUSTOM,
-      authorizer,
+      // authorizationType: AuthorizationType.CUSTOM,
+      // authorizer,
     });
 
     // upload function using S3 event
